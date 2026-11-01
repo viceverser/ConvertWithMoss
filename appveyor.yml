@@ -34,3 +34,8 @@ build_script:
       if ($LASTEXITCODE -ne 0) { throw 'Sector checks failed' }
       & java -ea -cp 'target\cue-checks' de.mossgrabers.convertwithmoss.format.iso.image.CueMode1MaterializerTest
       if ($LASTEXITCODE -ne 0) { throw 'Materializer checks failed' }
+
+      Write-Host 'Compiling full ConvertWithMoss application using Maven...'
+      & mvn -B -ntp -DskipTests package
+      if ($LASTEXITCODE -ne 0) { throw 'Full Maven application build failed' }
+      Write-Host 'Full ConvertWithMoss Maven package passed'
