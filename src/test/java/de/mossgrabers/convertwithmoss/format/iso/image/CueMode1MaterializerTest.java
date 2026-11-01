@@ -35,11 +35,24 @@ public final class CueMode1MaterializerTest
             }
             if (Files.size (out) != 4096)
                 throw new AssertionError ("Existing output modified");
+
+            // Also verify the direct 2048-byte layout, without raw-sector headers.
+            final byte [] plain = new byte [2048 * 2];
+            Arrays.fill (plain, 0, 2048, (byte) 37);
+            Arrays.fill (plain, 2048, 4096, (byte) 91);
+            Files.write (dir.resolve ("plain.bin"), plain);
+            final Path plainCue = dir.resolve ("plain.cue");
+            Files.writeString (plainCue, "FILE \\"plain.bin\\" BINARY\\nTRACK 01 MODE1/2048\\nINDEX 01 00:00:00\\n");
+            final Path plainOut = dir.resolve ("plain.iso");
+            CueMode1Materializer.materialize (plainCue, plainOut);
+            if (!Arrays.equals (plain, Files.readAllBytes (plainOut)))
+                throw new AssertionError ("2048-byte logical image differs from source");
+
             System.out.println ("CueMode1Materializer checks passed");
         }
         finally
         {
-            for (final String file: new String [] { "logical.iso", "sample.cue", "sample.bin" })
+            for (final String file: new String [] { "logical.iso", "sample.cue", "sample.bin", "plain.iso", "plain.cue", "plain.bin" })
                 Files.deleteIfExists (dir.resolve (file));
             Files.deleteIfExists (dir);
         }
