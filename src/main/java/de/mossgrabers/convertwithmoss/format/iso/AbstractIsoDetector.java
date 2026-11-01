@@ -64,15 +64,29 @@ public abstract class AbstractIsoDetector<T extends MetadataSettingsUI> extends 
      */
     protected List<IMultisampleSource> processAkaiS1000Disk (final File sourceFile)
     {
+        return this.processAkaiS1000Disk (sourceFile, sourceFile);
+    }
+
+
+    /**
+     * Read a materialized image while retaining the original disc identity in
+     * multisample names, paths and metadata.
+     *
+     * @param imageFile Logical image containing sampler data
+     * @param originalFile Original image or cue sheet
+     * @return Detected multisamples
+     */
+    protected List<IMultisampleSource> processAkaiS1000Disk (final File imageFile, final File originalFile)
+    {
         final List<IMultisampleSource> multiSampleSources = new ArrayList<> ();
         final AkaiS1000ProgramConverter converter = new AkaiS1000ProgramConverter (this.notifier);
 
-        try (final AkaiDiskImage disk = new AkaiDiskImage (sourceFile))
+        try (final AkaiDiskImage disk = new AkaiDiskImage (imageFile))
         {
             final int partitionCount = disk.getPartitionCount ();
 
-            final String fileName = sourceFile.getName ();
-            final String [] parts = AudioFileUtils.createPathParts (sourceFile.getParentFile (), this.sourceFolder, fileName);
+            final String fileName = originalFile.getName ();
+            final String [] parts = AudioFileUtils.createPathParts (originalFile.getParentFile (), this.sourceFolder, fileName);
             for (int partitionIndex = 0; partitionIndex < partitionCount; partitionIndex++)
             {
                 final AkaiPartition partition = disk.getPartition (partitionIndex);
@@ -108,7 +122,7 @@ public abstract class AbstractIsoDetector<T extends MetadataSettingsUI> extends 
                                 groups.add (group);
                             }
 
-                            final IMultisampleSource multisampleSource = this.createMultisampleSource (sourceFile, parts, programName, groups);
+                            final IMultisampleSource multisampleSource = this.createMultisampleSource (originalFile, parts, programName, groups);
                             AkaiS1000ProgramConverter.applyVoiceSettings (multisampleSource, layeredPrograms);
                             multisampleSource.extendSubPath (fileName);
                             multisampleSource.extendSubPath (volumeName);
