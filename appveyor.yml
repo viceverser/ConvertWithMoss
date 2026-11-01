@@ -1,0 +1,28 @@
+version: 1.0.{build}
+image: Visual Studio 2022
+build: off
+test: off
+
+install:
+  - ps: |
+      $ErrorActionPreference = 'Stop'
+      $jdk = 'C:\Program Files\Java\jdk-25'
+      if (-not (Test-Path (Join-Path $jdk 'bin\javac.exe'))) {
+        $candidate = Get-ChildItem 'C:\Program Files\Java' -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '25' } | Select-Object -First 1
+        if ($candidate) { $jdk = $candidate.FullName }
+      }
+      if (-not (Test-Path (Join-Path $jdk 'bin\javac.exe'))) {
+        throw 'Java 25 JDK not present on build worker. Configure Java 25 installation before compiling.'
+      }
+      $env:JAVA_HOME = $jdk
+      $env:PATH = (Join-Path $jdk 'bin') + ';' + $env:PATH
+      javac -version
+
+build_script:
+  - ps: |
+      $ErrorActionPreference = 'Stop'
+      New-Item -ItemType Directory -Force -Path 'target\cue-checks' | Out-Null
+      & javac -d 'target\cue-checks' 'src\main\java\de\mossgrabers\convertwithmoss\format\iso\image\CueMode1Image.java' 'src\test\java\de\mossgrabers\convertwithmoss\format\iso\image\CueMode1ImageTest.java'
+      if ($LASTEXITCODE -ne 0) { throw 'Compilation failed' }
+      & java -ea -cp 'target\cue-checks' de.mossgrabers.convertwithmoss.format.iso.image.CueMode1ImageTest
+      if ($LASTEXITCODE -ne 0) { throw 'Sector checks failed' }
