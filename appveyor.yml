@@ -54,13 +54,14 @@ build_script:
       $bundle = 'target\windows-test-bundle'
       New-Item -ItemType Directory -Force -Path (Join-Path $bundle 'lib') | Out-Null
       Copy-Item 'target\lib\*.jar' (Join-Path $bundle 'lib') -Force
+      # Bundle a private Java runtime so Windows users do not need Java installed.
+      $runtime = Join-Path $bundle 'runtime'
+      & jlink --add-modules java.se,javafx.controls,javafx.graphics,javafx.base --module-path "$env:JAVA_HOME\\jmods;target\\lib" --output $runtime --strip-debug --no-header-files --no-man-pages
+      if ($LASTEXITCODE -ne 0) { throw 'Bundled Java runtime creation failed' }
       $launcherLines = @(
         '@echo off',
         'setlocal',
-        'set "JAVA_EXE=java"',
-        'if exist "%JAVA_HOME%\bin\java.exe" set "JAVA_EXE=%JAVA_HOME%\bin\java.exe"',
-        '"%JAVA_EXE%" -version',
-        '"%JAVA_EXE%" -jar "%~dp0lib\convertwithmoss-20.4.0.jar"',
+        '"%~dp0runtime\\bin\\java.exe" -jar "%~dp0lib\\convertwithmoss-20.4.0.jar"',
         'if errorlevel 1 pause'
       )
       Set-Content -Path (Join-Path $bundle 'RUN.bat') -Value $launcherLines -Encoding ASCII
