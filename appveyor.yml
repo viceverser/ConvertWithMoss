@@ -54,15 +54,16 @@ build_script:
       $bundle = 'target\\windows-test-bundle'
       New-Item -ItemType Directory -Force -Path (Join-Path $bundle 'lib') | Out-Null
       Copy-Item 'target\\lib\\*.jar' (Join-Path $bundle 'lib') -Force
-      @'
-@echo off
-setlocal
-set "JAVA_EXE=java"
-if exist "%JAVA_HOME%\\bin\\java.exe" set "JAVA_EXE=%JAVA_HOME%\\bin\\java.exe"
-"%JAVA_EXE%" -version
-"%JAVA_EXE%" -jar "%~dp0lib\\convertwithmoss-20.4.0.jar"
-if errorlevel 1 pause
-'@ | Set-Content -Path (Join-Path $bundle 'RUN.bat') -Encoding ASCII
+      $launcherLines = @(
+        '@echo off',
+        'setlocal',
+        'set "JAVA_EXE=java"',
+        'if exist "%JAVA_HOME%\bin\java.exe" set "JAVA_EXE=%JAVA_HOME%\bin\java.exe"',
+        '"%JAVA_EXE%" -version',
+        '"%JAVA_EXE%" -jar "%~dp0lib\convertwithmoss-20.4.0.jar"',
+        'if errorlevel 1 pause'
+      )
+      Set-Content -Path (Join-Path $bundle 'RUN.bat') -Value $launcherLines -Encoding ASCII
       Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath 'target\\ConvertWithMoss_BIN_CUE_Windows_Test.zip' -Force
       Write-Host 'Portable Windows test bundle prepared'
 
