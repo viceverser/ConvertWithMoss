@@ -6,6 +6,8 @@ package de.mossgrabers.convertwithmoss.format.iso;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,6 +16,7 @@ import de.mossgrabers.convertwithmoss.core.IMultisampleSource;
 import de.mossgrabers.convertwithmoss.core.INotifier;
 import de.mossgrabers.convertwithmoss.core.settings.MetadataSettingsUI;
 import de.mossgrabers.convertwithmoss.format.akai.mpc2000.AkaiMPC2000Detector;
+import de.mossgrabers.convertwithmoss.format.iso.image.CueMode1Materializer;
 import de.mossgrabers.convertwithmoss.format.emu.emulator3.Emulator3Detector;
 import de.mossgrabers.convertwithmoss.format.emu.emulator4.Emu3DiskImage;
 import de.mossgrabers.convertwithmoss.format.emu.emulator4.Emulator4Detector;
@@ -45,7 +48,7 @@ public class IsoDetector extends AbstractIsoDetector<MetadataSettingsUI>
      */
     public IsoDetector (final INotifier notifier)
     {
-        super ("ISO/IMG file", "ISO", notifier, new MetadataSettingsUI ("ISO"), ".iso", ".img", ".out", ".sdk", ".hda");
+        super ("ISO/IMG file", "ISO", notifier, new MetadataSettingsUI ("ISO"), ".iso", ".img", ".out", ".sdk", ".hda", ".cue");
 
         this.emulator3Detector = new Emulator3Detector (notifier);
         this.emulator4Detector = new Emulator4Detector (notifier);
@@ -58,6 +61,38 @@ public class IsoDetector extends AbstractIsoDetector<MetadataSettingsUI>
     /** {@inheritDoc} */
     @Override
     protected List<IMultisampleSource> readPresetFile (final File sourceFile)
+    {
+        if (sourceFile.getName ().toLowerCase (java.util.Locale.ROOT).endsWith (".cue"))
+        {
+            Path logicalImage = null;
+            try
+            {
+                logicalImage = Files.createTempFile ("convertwithmoss-cue-", ".iso");
+                Files.delete (logicalImage);
+                logicalImage.toFile ().deleteOnExit ();
+                CueMode1Materializer.materialize (sourceFile.toPath (), logicalImage);
+                return this.readIsoImage (logicalImage.toFile ());
+            }
+            catch (final IOException ex)
+            {
+                this.notifier.logError ("IDS_NOTIFY_ERR_LOAD_FILE", ex);
+                if (logicalImage != null)
+                    try
+                    {
+                        Files.deleteIfExists (logicalImage);
+                    }
+                    catch (final IOException cleanup)
+                    {
+                        ex.addSuppressed (cleanup);
+                    }
+                return Collections.emptyList ();
+            }
+        }
+        return this.readIsoImage (sourceFile);
+    }
+
+
+    private List<IMultisampleSource> readIsoImage (final File sourceFile)
     {
         final IsoFormat isoFormat = IsoFormatIdentifier.identifyIso (sourceFile);
         switch (isoFormat)
