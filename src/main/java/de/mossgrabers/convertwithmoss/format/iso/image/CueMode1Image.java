@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -91,6 +90,29 @@ public final class CueMode1Image
     public long sectorCount () throws IOException
     {
         return Files.size (this.binary) / this.sectorSize - this.firstSector;
+    }
+
+    /**
+     * Stream the logical data sectors without reopening the binary for every sector.
+     * The output stream is owned by the caller and is not closed here.
+     */
+    public void writeLogicalImage (final java.io.OutputStream out) throws IOException
+    {
+        final long count = this.sectorCount ();
+        final byte [] data = new byte [2048];
+        try (final RandomAccessFile in = new RandomAccessFile (this.binary.toFile (), "r"))
+        {
+            in.seek (Math.multiplyExact (this.firstSector, this.sectorSize));
+            for (long sector = 0; sector < count; sector++)
+            {
+                if (this.sectorSize == 2352)
+                    in.seek (in.getFilePointer () + 16);
+                in.readFully (data);
+                out.write (data);
+                if (this.sectorSize == 2352)
+                    in.seek (in.getFilePointer () + 288);
+            }
+        }
     }
 
     public byte [] readSector (final long lba) throws IOException
