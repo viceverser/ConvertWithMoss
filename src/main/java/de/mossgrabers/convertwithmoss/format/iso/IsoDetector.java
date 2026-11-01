@@ -71,7 +71,7 @@ public class IsoDetector extends AbstractIsoDetector<MetadataSettingsUI>
                 Files.delete (logicalImage);
                 logicalImage.toFile ().deleteOnExit ();
                 CueMode1Materializer.materialize (sourceFile.toPath (), logicalImage);
-                final List<IMultisampleSource> sources = this.readIsoImage (logicalImage.toFile ());
+                final List<IMultisampleSource> sources = this.readIsoImage (logicalImage.toFile (), sourceFile);
                 if (sources.isEmpty ())
                     Files.deleteIfExists (logicalImage);
                 return sources;
@@ -91,11 +91,11 @@ public class IsoDetector extends AbstractIsoDetector<MetadataSettingsUI>
                 return Collections.emptyList ();
             }
         }
-        return this.readIsoImage (sourceFile);
+        return this.readIsoImage (sourceFile, sourceFile);
     }
 
 
-    private List<IMultisampleSource> readIsoImage (final File sourceFile)
+    private List<IMultisampleSource> readIsoImage (final File sourceFile, final File originalFile)
     {
         final IsoFormat isoFormat = IsoFormatIdentifier.identifyIso (sourceFile);
         switch (isoFormat)
@@ -108,7 +108,7 @@ public class IsoDetector extends AbstractIsoDetector<MetadataSettingsUI>
             case AKAI_S1000_S1100:
             case AKAI_S3000:
                 this.notifier.log (IDS_ISO_PROCESSING_FORMAT, IsoFormat.getName (isoFormat));
-                return this.processAkaiS1000Disk (sourceFile);
+                return this.processAkaiS1000Disk (sourceFile, originalFile);
 
             case EMU3:
                 this.notifier.log (IDS_ISO_PROCESSING_FORMAT, IsoFormat.getName (isoFormat));
