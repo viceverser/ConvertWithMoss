@@ -1,0 +1,25 @@
+name: Disc image adapter checks
+
+on:
+  push:
+    branches:
+      - feature/disc-image-adapters
+  workflow_dispatch:
+
+jobs:
+  cue-sector-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Compile standalone BIN/CUE reader and regression checks
+        run: |
+          mkdir -p target/cue-checks
+          javac -d target/cue-checks \
+            src/main/java/de/mossgrabers/convertwithmoss/format/iso/image/CueMode1Image.java \
+            src/test/java/de/mossgrabers/convertwithmoss/format/iso/image/CueMode1ImageTest.java
+      - name: Execute sector regression checks
+        run: java -ea -cp target/cue-checks de.mossgrabers.convertwithmoss.format.iso.image.CueMode1ImageTest
