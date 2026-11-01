@@ -45,8 +45,7 @@ public final class CueMode1Materializer
             try (final OutputStream out = Files.newOutputStream (output, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE))
             {
                 created = true;
-                for (long sector = 0; sector < count; sector++)
-                    out.write (image.readSector (sector));
+                image.writeLogicalImage (out);
             }
             if (Files.size (output) != expectedBytes)
                 throw new IOException ("Output length mismatch");
