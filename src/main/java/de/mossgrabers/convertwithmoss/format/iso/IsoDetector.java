@@ -71,7 +71,10 @@ public class IsoDetector extends AbstractIsoDetector<MetadataSettingsUI>
                 Files.delete (logicalImage);
                 logicalImage.toFile ().deleteOnExit ();
                 CueMode1Materializer.materialize (sourceFile.toPath (), logicalImage);
-                return this.readIsoImage (logicalImage.toFile ());
+                final List<IMultisampleSource> sources = this.readIsoImage (logicalImage.toFile ());
+                if (sources.isEmpty ())
+                    Files.deleteIfExists (logicalImage);
+                return sources;
             }
             catch (final IOException ex)
             {
