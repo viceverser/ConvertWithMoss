@@ -26,3 +26,5 @@ build_script:
       if ($LASTEXITCODE -ne 0) { throw 'Compilation failed' }
       & java -ea -cp 'target\cue-checks' de.mossgrabers.convertwithmoss.format.iso.image.CueMode1ImageTest
       if ($LASTEXITCODE -ne 0) { throw 'Sector checks failed' }
+      & java -ea -cp 'target\\cue-checks' de.mossgrabers.convertwithmoss.format.iso.image.CueMode1MaterializerTest
+      if ($LASTEXITCODE -ne 0) { throw 'Materializer checks failed' }
