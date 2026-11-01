@@ -48,3 +48,24 @@ build_script:
       }
       if ($mavenExitCode -ne 0) { throw "Full Maven application build failed (exit code $mavenExitCode)" }
       Write-Host 'Full ConvertWithMoss Maven package passed'
+
+      # Publish a portable Windows test bundle, not an installer.
+      # Preserve the Maven-produced JAR manifest and its dependency layout.
+      $bundle = 'target\\windows-test-bundle'
+      New-Item -ItemType Directory -Force -Path (Join-Path $bundle 'lib') | Out-Null
+      Copy-Item 'target\\lib\\*.jar' (Join-Path $bundle 'lib') -Force
+      @'
+@echo off
+setlocal
+set "JAVA_EXE=java"
+if exist "%JAVA_HOME%\\bin\\java.exe" set "JAVA_EXE=%JAVA_HOME%\\bin\\java.exe"
+"%JAVA_EXE%" -version
+"%JAVA_EXE%" -jar "%~dp0lib\\convertwithmoss-20.4.0.jar"
+if errorlevel 1 pause
+'@ | Set-Content -Path (Join-Path $bundle 'RUN.bat') -Encoding ASCII
+      Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath 'target\\ConvertWithMoss_BIN_CUE_Windows_Test.zip' -Force
+      Write-Host 'Portable Windows test bundle prepared'
+
+artifacts:
+  - path: target\\ConvertWithMoss_BIN_CUE_Windows_Test.zip
+    name: Windows BIN-CUE test bundle
