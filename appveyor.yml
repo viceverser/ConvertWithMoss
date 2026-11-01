@@ -51,9 +51,9 @@ build_script:
 
       # Publish a portable Windows test bundle, not an installer.
       # Preserve the Maven-produced JAR manifest and its dependency layout.
-      $bundle = 'target\\windows-test-bundle'
+      $bundle = 'target\windows-test-bundle'
       New-Item -ItemType Directory -Force -Path (Join-Path $bundle 'lib') | Out-Null
-      Copy-Item 'target\\lib\\*.jar' (Join-Path $bundle 'lib') -Force
+      Copy-Item 'target\lib\*.jar' (Join-Path $bundle 'lib') -Force
       $launcherLines = @(
         '@echo off',
         'setlocal',
@@ -64,9 +64,11 @@ build_script:
         'if errorlevel 1 pause'
       )
       Set-Content -Path (Join-Path $bundle 'RUN.bat') -Value $launcherLines -Encoding ASCII
-      Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath 'target\\ConvertWithMoss_BIN_CUE_Windows_Test.zip' -Force
-      Write-Host 'Portable Windows test bundle prepared'
+      Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath 'target\ConvertWithMoss_BIN_CUE_Windows_Test.zip' -Force
+      if (-not (Test-Path 'target\ConvertWithMoss_BIN_CUE_Windows_Test.zip')) { throw 'Portable ZIP was not created' }
+      Push-AppveyorArtifact 'target\ConvertWithMoss_BIN_CUE_Windows_Test.zip' -FileName 'ConvertWithMoss_BIN_CUE_Windows_Test.zip'
+      Write-Host 'Portable Windows test bundle uploaded as artifact'
 
 artifacts:
-  - path: target\\ConvertWithMoss_BIN_CUE_Windows_Test.zip
+  - path: target\ConvertWithMoss_BIN_CUE_Windows_Test.zip
     name: Windows BIN-CUE test bundle
