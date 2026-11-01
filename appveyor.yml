@@ -36,6 +36,15 @@ build_script:
       if ($LASTEXITCODE -ne 0) { throw 'Materializer checks failed' }
 
       Write-Host 'Compiling full ConvertWithMoss application using Maven...'
-      & mvn -B -ntp -DskipTests package
-      if ($LASTEXITCODE -ne 0) { throw 'Full Maven application build failed' }
+      # Maven/JDK warnings may arrive on stderr; do not let PowerShell
+      # convert those warnings into terminating exceptions.
+      $ErrorActionPreference = 'Continue'
+      try {
+        & mvn -B -ntp -DskipTests package
+        $mavenExitCode = $LASTEXITCODE
+      }
+      finally {
+        $ErrorActionPreference = 'Stop'
+      }
+      if ($mavenExitCode -ne 0) { throw "Full Maven application build failed (exit code $mavenExitCode)" }
       Write-Host 'Full ConvertWithMoss Maven package passed'
