@@ -22,9 +22,15 @@ build_script:
   - ps: |
       $ErrorActionPreference = 'Stop'
       New-Item -ItemType Directory -Force -Path 'target\cue-checks' | Out-Null
-      & javac -d 'target\cue-checks' 'src\main\java\de\mossgrabers\convertwithmoss\format\iso\image\CueMode1Image.java' 'src\test\java\de\mossgrabers\convertwithmoss\format\iso\image\CueMode1ImageTest.java'
+      $sources = @(
+        'src\main\java\de\mossgrabers\convertwithmoss\format\iso\image\CueMode1Image.java',
+        'src\main\java\de\mossgrabers\convertwithmoss\format\iso\image\CueMode1Materializer.java',
+        'src\test\java\de\mossgrabers\convertwithmoss\format\iso\image\CueMode1ImageTest.java',
+        'src\test\java\de\mossgrabers\convertwithmoss\format\iso\image\CueMode1MaterializerTest.java'
+      )
+      & javac -d 'target\cue-checks' @sources
       if ($LASTEXITCODE -ne 0) { throw 'Compilation failed' }
       & java -ea -cp 'target\cue-checks' de.mossgrabers.convertwithmoss.format.iso.image.CueMode1ImageTest
       if ($LASTEXITCODE -ne 0) { throw 'Sector checks failed' }
-      & java -ea -cp 'target\\cue-checks' de.mossgrabers.convertwithmoss.format.iso.image.CueMode1MaterializerTest
+      & java -ea -cp 'target\cue-checks' de.mossgrabers.convertwithmoss.format.iso.image.CueMode1MaterializerTest
       if ($LASTEXITCODE -ne 0) { throw 'Materializer checks failed' }
