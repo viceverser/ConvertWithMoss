@@ -30,3 +30,9 @@ Do not modify upstream format decoders until the adapter contract is established
 Integration gate: audit each dispatched family for deferred file references; define a stable cache path or managed lifecycle before wiring `.cue` into `IsoDetector`. Keep the current materializer standalone until that contract is settled.
 
 The standalone materializer currently opens the BIN file once per logical sector through `readSector`; this is correct for small fixtures but needs a streaming implementation before practical full-disc conversion.
+
+## Initial ISO detector integration — experimental
+
+`IsoDetector` now advertises `.cue` and materializes supported single-track Mode 1 images before calling the existing ISO-format dispatch. Temporary logical images are marked `deleteOnExit` to avoid invalidating lazy source reads during the process lifetime; abrupt termination may leave files behind. This is a provisional lifecycle policy, not a robust managed cache.
+
+**Known limitations before release:** temporary image names/paths can leak into output metadata and relative path calculations; each source re-read creates a new temporary image; available disk capacity is not preflighted; full application Maven compilation and actual sampler-disc conversion are not yet verified. The initial adapter does not support mixed-mode/multitrack images. Do not merge into main before these are resolved and tested.
