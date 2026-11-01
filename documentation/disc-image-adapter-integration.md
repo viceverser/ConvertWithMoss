@@ -19,3 +19,14 @@ The decoders consume a `java.io.File`, not a generic sector-reader interface. Si
 5. Research MDF/MDS specifications and verified fixtures before claiming compatibility.
 
 Do not modify upstream format decoders until the adapter contract is established. No Windows driver is required for this approach.
+
+
+## Source-lifetime audit 02 (verified against branch source)
+
+`AbstractDetector.detect(...)` dispatches detection asynchronously via a single-thread executor and delivers `IMultisampleSource` objects to consumers. `readSource(...)` can also re-read a selected source later. Consequently, deleting a temporary logical image immediately after `IsoDetector.readPresetFile` returns is unsafe unless every dispatched sample is demonstrably fully materialized and later reads recreate the same image.
+
+`AkaiS1000Sample(AkaiDiskImage, int)` eagerly reads PCM into an in-memory `short[]` while the `AkaiDiskImage` is open, and `AbstractIsoDetector.processAkaiS1000Disk` closes that image before returning. This is encouraging for Akai S1000 but **does not prove** that the other ISO-dispatched sampler families are eager. `AkaiDiskImage` also casts the file length to an `int`, so images exceeding 2 GiB require separate handling.
+
+Integration gate: audit each dispatched family for deferred file references; define a stable cache path or managed lifecycle before wiring `.cue` into `IsoDetector`. Keep the current materializer standalone until that contract is settled.
+
+The standalone materializer currently opens the BIN file once per logical sector through `readSector`; this is correct for small fixtures but needs a streaming implementation before practical full-disc conversion.
